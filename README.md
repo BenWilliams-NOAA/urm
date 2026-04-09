@@ -7,28 +7,30 @@
 pak::pak("BenWilliams-NOAA/urm")
 ```
 The goal of `urm` is to provide a single functional RTMB model for AFSC rockfish stocks, using 'best practices'.
+It is setup for a setup for a single area, single sex, single fleet, single survey with recruitment as log deviates from a mean.
 
 Example data format:
 
 ```
 data = list(ages = ,        					# vector - rec_age to plus_age
-  			years = ,							# vector - all years of catch 
+  			    years = ,							    # vector - all years of catch 
             length_bins = , 					# vector 
             spawn_mo = ,    					# scalar - when they spawn
-            bias_switch = 0, 					# scalar (1/0) on for random effects, default: 0
+            sex_ratio = 0.5,					# scalar - ratio of females to males
+            bias_ramp = , 						# vector - values between 0-1, dim: length(years), default: 0
             waa = ,          					# vector - weight at age (grams)
-            maa = ,								# vector - maturity at age 
-            slx_type = ,						# vector - length: number of selectivity curves, minimum need 2 (fishery and survey) 
-            									# 1=logistic (2 pars), 2=gamma (2 pars), 3=double normal (4 pars), 4=double logistic (4 pars)
-            fish_block_ind = , 					# vector - length (years), integer mapping each year to a selectivity curve 
+            maa = ,										# vector - maturity at age 
+            slx_type = ,							# vector - length: number of selectivity curves, minimum need 2 (fishery and survey) 
+            													# 1=logistic (2 pars), 2=gamma (2 pars), 3=double normal (4 pars), 4=double logistic (4 pars)
+            fish_block_ind = , 				# vector - length (years), integer mapping each year to a selectivity curve 
             srv_slx_ind = , 					# integer - pointer to which curve in log_slx_pars belongs to the survey
             catch_obs = ,  						# vector - catch by year, (tons)
             catch_cv = ,   						# vector - catch cv = 0.1 to match the historical weighting of 50
-            srv_ind = ,							# vector - survey index, dim: length(years) 1 = use, 0 = ignore
-            srv_yrs = ,							# vector - survey years
-            srv_obs = ,							# vector - survey obs (unit: tons)
-            srv_cv = ,							# vector - survey cv
-            srv_wt = 1.0,						# scalar - survey weight
+            srv_ind = ,								# vector - survey index, dim: length(years) 1 = use, 0 = ignore
+            srv_yrs = ,								# vector - survey years
+            srv_obs = ,								# vector - survey obs (unit: tons)
+            srv_cv = ,								# vector - survey cv
+            srv_wt = 1.0,							# scalar - survey weight
             fish_age_ind = ,					# vector - fish age comp index, dim: length(years) 1 = use, 0 = ignore
             fish_age_yrs = ,					# vector - fish age comp years
             fish_age_obs = ,					# matrix - fishery age comp observations, dim: ages, length(fish_age_yrs)
@@ -108,10 +110,9 @@ pars = list(log_M = log(0.0614),
              log_slx_pars = log_slx_pars,
              log_q = log(1.15),
              log_mean_R = 3.0,
-             init_log_Rt = rep(0, 27),
-             log_Rt = rep(0, length(data1$years)),
+             log_Rt = rep(0, length(data$years) + nrow(data$age_error) - 1),
              log_mean_F = 0,
-             log_Ft = rep(0, length(data1$years)),
+             log_Ft = rep(0, length(data$years)),
              sigmaR = 1.7,
              sigmaF = 1.0,
              log_F50 = log(0.05), 
@@ -119,8 +120,41 @@ pars = list(log_M = log(0.0614),
              log_F35 = log(0.07))
 ```           
 
+Build a bias ramp
+
+```
+# 4 inflection points
+yr1 = 1980 # last year of no real data
+yr2 = 1990 # first year of full data
+yr3 = 2024 # max(years) - recruitment age
+yr4 = 2026 # last year of data max(years)
+
+bias_ramp = rep(0, length(years))
+
+for(t in 1:length(years)) {
+  y = years[t]
+  
+  if (y > yr1 & y < yr2) {
+    # ascending limb
+    bias_ramp[t] = (y - yr1) / (yr2 - yr1) 
+  } else if (y >= yr2 & y <= yr3) {
+    # full data
+    bias_ramp[t] = 1.0 
+  } else if (y > yr3 & y < yr4) {
+    # descending limb
+    bias_ramp[t] = 1.0 - ((y - yr3) / (yr4 - yr3)) 
+  }
+  # (years <= yr1 and >= yr4 stay 0.0)
+}
+
+data$bias_ramp = bias_ramp
+```
+
 Model run
 ```
 pak::pak("BenWilliams-NOAA/RTMButils")
-mod = RTMButils::run_model(urm, data1, pars1, map = mapping)
+mod = RTMButils::run_model(urm, data, pars, map = mapping)
+
+# to run the model with random effects, turn then data$bias_ramp = rep(1, length(data$years))
+mod = RTMButils::run_model(urm, data, pars, map = mapping, random = "log_Rt")
 ```

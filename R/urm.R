@@ -28,9 +28,6 @@ urm <- function(pars, data) {
   F40 = exp(log_F40)
   F35 = exp(log_F35)
  
-  # bias adjustment if using random effects, yes: bias_switch = 1	
-  bias_adj = bias_switch * ((sigmaR^2) / 2)
-
    # spawning adjustments
    spawn_fract = (spawn_mo - 1) / 12           # fraction of year before spawning
  
@@ -54,13 +51,13 @@ urm <- function(pars, data) {
    srv_age_pred = matrix(0, A1, Tsa)
    fish_size_pred = matrix(0, L, Tfs)
    slx_curves = matrix(0, A, n_curves)
- 
+ 	 
    # priors ----
-   nll_M = -dnorm(log(M), log(mean_M), cv_M, log = TRUE)
-   nll_q= -dnorm(log(q), log(mean_q), cv_q, log = TRUE)
-   nll_sigmaR= -dnorm(log(sigmaR / mean_sigmaR), 0, cv_sigmaR, log = TRUE)
+   nll_M = -RTMB::dnorm(log(M), log(mean_M), cv_M, log = TRUE)
+   nll_q= -RTMB::dnorm(log(q), log(mean_q), cv_q, log = TRUE)
+   nll_sigmaR= -RTMB::dnorm(log(sigmaR / mean_sigmaR), 0, cv_sigmaR, log = TRUE)
  
-  wt_mature = waa * maa *0.5
+  wt_mature = waa * maa * sex_ratio
 
    # selectivity ----
    for(s in 1:n_curves) {
@@ -84,15 +81,18 @@ urm <- function(pars, data) {
    Sat = exp(-Zat)                   # survivorship at age and year
  
    # numbers-at-age ----
+  
    for(t in 1:T) {
-     Nat[1,t] = exp(log_mean_R - bias_adj + log_Rt[t])  # recruitment in year t
+     # year-specific bias adjustment if using random effects, yes: bias_switch = 1	
+     bias_adj = bias_ramp[t] * ((sigmaR^2) / 2)
+     Nat[1,t] = exp(log_mean_R - bias_adj + log_Rt[(A-1+t)])  # recruitment in year t
    }
-   # column 1: initial numbers-at-age for each cohort
+   # column 1: initial numbers-at-age for each cohort cells 1 to A-1
    for(a in 2:(A-1)) {
-     Nat[a,1] = exp(log_mean_R - bias_adj - (a-1) * M + init_log_Rt[a-1])
+     Nat[a,1] = exp(log_mean_R - (a-1) * M + log_Rt[a-1])
    }
    # specific deviation for initial plus group
-   Nat[A,1] = (exp(log_mean_R - bias_adj - (A-1) * M) / (1 - exp(-M))) * exp(init_log_Rt[A-1])      
+   Nat[A,1] = (exp(log_mean_R - (A-1) * M) / (1 - exp(-M))) * exp(log_Rt[A-1])      
  
    # forward
  for(t in 2:T) {
@@ -113,7 +113,7 @@ urm <- function(pars, data) {
    Cat = Fat / Zat * Nat * (1-Sat)
    catch_pred = colSums(Cat * waa)
    sigma_catch = sqrt(log(catch_cv^2 + 1.0))
-   like_catch = -sum(dnorm(log(catch_obs + g), log(catch_pred + g), sigma_catch, log = TRUE)) 
+   like_catch = -sum(RTMB::dnorm(log(catch_obs + g), log(catch_pred + g), sigma_catch, log = TRUE)) 
  
    # survey biomass ----
    # w/log-normal bias correction
@@ -125,7 +125,7 @@ urm <- function(pars, data) {
        srv_pred[isrv] = sum(Nat[,t] * slx_srv * waa) * q 
        log_sd = sqrt(log(1 + srv_cv[isrv]^2))
        mu = log(srv_pred[isrv] + g) - 0.5 * log_sd^2
-       srv_like = srv_like -dnorm(log(srv_obs[isrv]), mu, log_sd, log = TRUE)
+       srv_like = srv_like -RTMB::dnorm(log(srv_obs[isrv]), mu, log_sd, log = TRUE)
        isrv = isrv + 1
      }
    }
@@ -138,10 +138,10 @@ urm <- function(pars, data) {
    for(t in 1:T) {
      if(fish_age_ind[t] == 1) {
        # predicted age composition (with ageing error)
-       fish_age_pred[,icomp] = as.vector(colSums((Cat[,t] / (sum(Cat[,t]) + g)) * age_error))
+       fish_age_pred[,icomp] = as.vector(colSums((Cat[,t] / (sum(Cat[,t]))) * age_error))
        obs_count = fish_age_obs[,icomp] * fish_age_iss[icomp]  
-       fish_age_lk = fish_age_lk - dmultinom(x = obs_count,
-        																			prob = fish_age_pred[,icomp] + g,
+       fish_age_lk = fish_age_lk - RTMB::dmultinom(x = obs_count,
+        																			prob = fish_age_pred[,icomp],
      																					log = TRUE)
        icomp = icomp + 1
      }
@@ -156,10 +156,10 @@ urm <- function(pars, data) {
    for(t in 1:T) {
      if(srv_age_ind[t] == 1) {
        # predicted age composition (with ageing error)
-       srv_age_pred[,icomp] = as.vector(colSums((Nat[,t] * slx_srv) / (sum(Nat[,t] * slx_srv) + g) * age_error))
+       srv_age_pred[,icomp] = as.vector(colSums((Nat[,t] * slx_srv) / (sum(Nat[,t] * slx_srv)) * age_error))
        obs_count = srv_age_obs[,icomp] * srv_age_iss[icomp] 
-       srv_age_lk = srv_age_lk - dmultinom(x = obs_count,
-        																		prob = srv_age_pred[,icomp] + g,
+       srv_age_lk = srv_age_lk - RTMB::dmultinom(x = obs_count,
+        																		prob = srv_age_pred[,icomp],
      																				log = TRUE)
        icomp = icomp + 1
      }
@@ -172,10 +172,10 @@ urm <- function(pars, data) {
    
    for(t in 1:T) {
      if(fish_size_ind[t] == 1) {
-       fish_size_pred[,icomp] = as.vector(colSums((Cat[,t] / (sum(Cat[,t]) + g)) * saa_array[,,fish_saa_ind[t]]))
+       fish_size_pred[,icomp] = as.vector(colSums((Cat[,t] / (sum(Cat[,t]))) * saa_array[,,fish_saa_ind[t]]))
        obs_count = fish_size_obs[,icomp] * fish_size_iss[icomp] 
-       fish_size_lk = fish_size_lk - dmultinom(x = obs_count,
-        																			prob = fish_size_pred[,icomp] + g,
+       fish_size_lk = fish_size_lk - RTMB::dmultinom(x = obs_count,
+        																			prob = fish_size_pred[,icomp],
      																					log = TRUE)
        icomp = icomp + 1
      }
@@ -218,8 +218,8 @@ urm <- function(pars, data) {
    B35 = B0 * 0.35
  
    # likelihood/penalties ----
-   like_rec = -sum(dnorm(x = c(log_Rt, init_log_Rt), mean = 0, sd = sigmaR, log = TRUE)) * wt_rec_var
-   f_regularity = -sum(dnorm(x = log_Ft, mean = 0, sd = sigmaF, log = TRUE)) * wt_fmort_reg
+   like_rec = -sum(RTMB::dnorm(x = log_Rt, mean = 0, sd = sigmaR, log = TRUE)) * wt_rec_var
+   f_regularity = -sum(RTMB::dnorm(x = log_Ft, mean = 0, sd = sigmaF, log = TRUE)) * wt_fmort_reg
  
    # joint negative log-likelihood
    nll = like_catch + 
