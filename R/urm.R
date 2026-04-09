@@ -5,7 +5,8 @@
 # ben.williams@noaa.gov
 # 2026-04
 
-# sqrt(1/ (catch_wt * 2))
+# convert catch_wt to cv
+# sqrt(1 / (catch_wt * 2))
 
 cmb <- function(f, d) function(p) f(p, d)
 
@@ -313,66 +314,3 @@ urm <- function(pars, data) {
  
  
 }
-
-pars1 = list(log_M = log(0.0614),
-             log_slx_pars = log_slx_pars,
-             log_q = log(1.15),
-             log_mean_R = 3.0,
-             init_log_Rt = rep(0, 27),
-             log_Rt = rep(0, length(data1$years)),
-             log_mean_F = 0,
-             log_Ft = rep(0, length(data1$years)),
-             sigmaR = 1.7,
-             sigmaF = 1.0,
-             log_F50 = log(0.05), 
-             log_F40 = log(0.06), 
-             log_F35 = log(0.07))
-
-data = list(ages = ,        						# vector - rec_age to plus_age
-  					years = ,										# vector - all years of catch 
-            length_bins = , 						# vector 
-            spawn_mo = ,    						# scalar - when they spawn
-            bias_switch = 0, 						# scalar (1/0) on for random effects, default: 0
-            waa = ,          						# vector - weight at age (grams)
-            maa = ,											# vector - maturity at age 
-            slx_type = ,								# vector - length: number of selectivity curves, minimum need 2 (fishery and survey) 
-            														# 1=logistic (2 pars), 2=gamma (2 pars), 3=double normal (4 pars), 4=double logistic (4 pars)
-            fish_block_ind = , 					# vector - length (years), integer mapping each year to a selectivity curve 
-            srv_slx_ind = , 						# integer - pointer to which curve in log_slx_pars belongs to the survey
-            catch_obs = ,  							# vector - catch by year, (tons)
-            catch_cv = ,   							# vector - catch cv = 0.1 to match the historical weighting of 50
-            srv_ind = ,									# vector - survey index, dim: length(years) 1 = use, 0 = ignore
-            srv_yrs = ,									# vector - survey years
-            srv_obs = ,									# vector - survey obs (unit: tons)
-            srv_cv = ,									# vector - survey cv
-            srv_wt = 1.0,								# scalar - survey weight
-            fish_age_ind = ,						# vector - fish age comp index, dim: length(years) 1 = use, 0 = ignore
-            fish_age_yrs = ,						# vector - fish age comp years
-            fish_age_obs = ,						# matrix - fishery age comp observations, dim: ages, length(fish_age_yrs)
-            fish_age_iss = ,						# vector - fish age comp input sample size, dim: length(fish_age_yrs)
-            fish_age_wt = 1.0,					# scalar - fish age comp weight
-            srv_age_ind = ,							# vector - survey age comp index, dim length(years) 1 = use, 0 = ignore
-            srv_age_yrs = ,							# vector - survey age comp years
-            srv_age_obs = ,							# matrix - survey age comp observations, dim: ages, length(srv_age_yrs)
-            srv_age_iss = ,							# vector - survey age comp input sample size, dim: length(srv_age_yrs)
-            srv_age_wt = 1.0,						# scalar - survey age comp weight
-            fish_size_ind = ,						# vector - fish size comp index, dim: length(years) 1 = use, 0 = ignore
-            fish_size_yrs = ,						# vector - fish size comp years
-            fish_size_obs = ,						# matrix - fish proportions at length, dim: A, length(fish_size_yrs))
-            fish_size_iss = ,						# vector - fish size comp input sample size, dim: length(fish_size_yrs)
-            fish_size_wt = 1.0,					# scalar - fish size comp weight
-            age_error = ,								# matrix - age error (can be a rectangular matrix)
-            saa_array = ,								# array  - of size-at-age matrixes (dim: ages, length_bins)
-            fish_saa_ind =, 						# vector - which saa_array to use, (dim: length(years)))
-            wt_fmort_reg = 0.1,					# fishing mortality regulation weight
-            wt_rec_var = 1,							# recruitment variability weight
-            mean_M = 0.0614,						# natural mortality prior
-            cv_M = 0.1,									# natural mortality cv
-            mean_q = 1.15, 							# catchbility prior
-            cv_q = 0.447213595,					# catchability cv
-            mean_sigmaR = 1.7, 					# sigmaR prior
-            cv_sigmaR = 0.2,  					# sigmaR cv
-            yield_ratio = yield_ratio) 	# scalar - yield ratio to pass through to projection module
-m25aa = run_model(urm, data1, pars1, map = list(log_slx_pars = map_slx_factor))
-
-
