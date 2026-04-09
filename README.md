@@ -59,7 +59,7 @@ data = list(ages = ,        					# vector - rec_age to plus_age
 ```
 
 Selectivity parameters example  
-Selectivity functions can be found [here](https://github.com/BenWilliams-NOAA/RTMButils/blob/main/R/selectivity.R)
+[selectivity functions can be found here](https://github.com/BenWilliams-NOAA/RTMButils/blob/main/R/selectivity.R)
 
 ```
 # for a gamma fishery and logistic survey, no time blocks
