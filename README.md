@@ -17,7 +17,7 @@ data = list(ages = ,        					# vector - rec_age to plus_age
             length_bins = , 					# vector 
             spawn_mo = ,    					# scalar - when they spawn
             sex_ratio = 0.5,					# scalar - ratio of females to males
-            bias_ramp = , 						# vector - values between 0-1, dim: length(years), set to 1 - unsure
+            bias_ramp = , 						# vector - values between 0-1, dim: length(years), set to 1 - if unsure
             waa = ,          					# vector - weight at age (grams)
             maa = ,										# vector - maturity at age 
             slx_type = ,							# vector - length: number of selectivity curves, minimum need 2 (fishery and survey) 
