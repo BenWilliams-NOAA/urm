@@ -8,9 +8,6 @@
 # convert catch_wt to cv
 # sqrt(1 / (catch_wt * 2))
 
-cmb <- function(f, d) function(p) f(p, d)
-
-
 urm <- function(pars, data) {
   # load ----
   require(RTMB)
