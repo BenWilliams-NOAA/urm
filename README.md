@@ -6,7 +6,7 @@
 ```
 pak::pak("BenWilliams-NOAA/urm")
 ```
-The goal of urm is to provide a single functional RTMB model for AFSC rockfish stocks, using 'best practices'.
+The goal of `urm` is to provide a single functional RTMB model for AFSC rockfish stocks, using 'best practices'.
 
 Example data format:
 
@@ -58,7 +58,8 @@ data = list(ages = ,        					# vector - rec_age to plus_age
             yield_ratio = yield_ratio) 	        # scalar - yield ratio to pass through to projection module
 ```
 
-Selectivity parameters example
+Selectivity parameters example  
+Selectivity functions can be found [here](https://github.com/BenWilliams-NOAA/RTMButils/blob/main/R/selectivity.R)
 
 ```
 # for a gamma fishery and logistic survey, no time blocks
