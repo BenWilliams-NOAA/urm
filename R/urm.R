@@ -2,6 +2,7 @@
 # statistical catch-at-age model generally based on the goa pop model, but works for dusky and northerns as well
 # setup for a single area, single sex, single fleet, single survey 
 # currently has fishery selectivity blocks available
+# runs in conjunction with github.com/BenWilliams-NOAA/RTMButils
 # ben.williams@noaa.gov
 # 2026-04
 
