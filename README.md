@@ -61,11 +61,17 @@ data = list(ages = ,        					# vector - rec_age to plus_age
 ```
 
 Selectivity parameters example  
-[selectivity functions can be found here](https://github.com/BenWilliams-NOAA/RTMButils/blob/main/R/selectivity.R)
+[selectivity functions can be found here](https://github.com/BenWilliams-NOAA/RTMButils/blob/main/R/selectivity.R). 
+Setup as a a matrix with rows being the params for fishery (w or w/o timeblocks) and survey parameters. 
+`srv_slx_ind` identifies the row that corresponds to the survey selectivity parameters.
 
 ```
 # for a gamma fishery and logistic survey, no time blocks
-slx_type = c(2, 1),	#1=logistic (2 pars), 2=gamma (2 pars), 3=double normal (4 pars), 4=double logistic (4 pars)
+# 1=logistic (2 pars)
+# 2=gamma (2 pars)
+# 3=double normal (4 pars)
+# 4=double logistic (4 pars)
+slx_type = c(2, 1),	
 fish_block_ind = rep(1, length(years)), 					
 srv_slx_ind = 2, # the position in slx_type that id's the survey slx type
 log_slx_pars = log( matrix(c(a50 = log(7.5), delta = 3.0,
@@ -74,7 +80,7 @@ log_slx_pars = log( matrix(c(a50 = log(7.5), delta = 3.0,
 
 # for multiple time blocks
 # for a gamma fishery and logistic survey, no time blocks
-slx_type = c(1, 2, 4, 4, 1),  # 1=logistic (2 pars), 2=gamma (2 pars), 3=double normal (4 pars), 4=double logistic (4 pars)
+slx_type = c(1, 2, 4, 4, 1)
 fish_block_ind = c(rep(1, 10), rep(2, 5), rep(3, 15), rep(4, 10)), 	# in this case length(years) = 40				
 srv_slx_ind = 5,              # the position in slx_type that id's the survey slx type
  
