@@ -7,7 +7,7 @@
 pak::pak("BenWilliams-NOAA/urm")
 ```
 The goal of `urm` is to provide a single functional RTMB model for AFSC rockfish stocks, using 'best practices'.
-It is setup for a setup for a single area, single sex, single fleet, single survey with recruitment as log deviates from a mean.
+It is setup for a single area, single sex, single fleet, single survey with recruitment as log deviates from a mean.
 
 Example data format:
 
