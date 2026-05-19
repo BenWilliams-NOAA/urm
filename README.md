@@ -18,6 +18,7 @@ data = list(ages = ,        					# vector - rec_age to plus_age
             spawn_mo = ,    					# scalar - when they spawn
             sex_ratio = 0.5,					# scalar - ratio of females to males
             bias_ramp = , 						# vector - values between 0-1, dim: length(years), set to 1 - if unsure
+            bias_switch = ,						# scalar - 1 = use bias ramp, 0 = do not
             waa = ,          					# vector - weight at age (grams)
             maa = ,										# vector - maturity at age 
             slx_type = ,							# vector - length: number of selectivity curves, minimum need 2 (fishery and survey) 
@@ -161,7 +162,7 @@ Model run
 pak::pak("BenWilliams-NOAA/RTMButils")
 mod = RTMButils::run_model(urm, data, pars, map = mapping)
 
-# to run the model with random effects, turn then data$bias_ramp = rep(1, length(data$years))
+# to run the model with random effects, turn then data$bias_switch = 0
 mod = RTMButils::run_model(urm, data, pars, map = mapping, random = "log_Rt")
 ```
 

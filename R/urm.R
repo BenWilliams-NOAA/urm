@@ -25,7 +25,9 @@ urm <- function(pars, data) {
   F50 = exp(log_F50)
   F40 = exp(log_F40)
   F35 = exp(log_F35)
- 
+ 	R_init = exp(log_mean_R_init)
+  F_init = exp(log_F_init)
+
    # spawning adjustments
    spawn_fract = (spawn_mo - 1) / 12           # fraction of year before spawning
  
@@ -40,6 +42,7 @@ urm <- function(pars, data) {
    L = length(length_bins)                     # lengths in comps
    n_curves = nrow(slx_pars) 									 # number of selectivity curves
    g = 0.00001                                 # small number to avoid division by zero
+   Z_init = cum_Z_init = rep(0, A)													 # total mortality pre-model equilibrium
    
    # containers ----
    Bat = Cat = Nat = Fat = Zat = Sat = slx_fish = matrix(0, A, T)   # biomass, catch, numbers, F, Z, S, selectivity at age
@@ -59,7 +62,7 @@ urm <- function(pars, data) {
 
    # selectivity ----
    for(s in 1:n_curves) {
-     slx_curves[,s] = get_slx(ages=1:A, type=slx_type[s], pars=slx_pars[s,], adj=0)
+     slx_curves[,s] = RTMButils::get_slx(ages=1:A, type=slx_type[s], pars=slx_pars[s,], adj=1)
    }
    
    # assign to the fishery over time
@@ -82,15 +85,31 @@ urm <- function(pars, data) {
   
    for(t in 1:T) {
      # year-specific bias adjustment if using random effects, yes: bias_switch = 1	
-     bias_adj = bias_ramp[t] * ((sigmaR^2) / 2)
-     Nat[1,t] = exp(log_mean_R - bias_adj + log_Rt[(A-1+t)])  # recruitment in year t
+     if(bias_switch == 1) {
+     		bias_adj = bias_ramp[t] * ((sigmaR^2) / 2)
+     		Nat[1,t] = exp(log_mean_R - bias_adj + log_Rt[(A-1+t)])  # recruitment in year t
+     } else {
+       Nat[1,t] = exp(log_mean_R + log_Rt[(A-1+t)])  # recruitment in year t
+     }
    }
-   # column 1: initial numbers-at-age for each cohort cells 1 to A-1
-   for(a in 2:(A-1)) {
-     Nat[a,1] = exp(log_mean_R - (a-1) * M + log_Rt[a-1])
+  
+    # initial total mortality at age (historical pre-model equilibrium)
+   for(a in 1:A) {
+     Z_init[a] = M + F_init * slx_fish[a, 1] 
    }
+  
+  # cumulative mortality experienced by each cohort prior to Year 1
+  for(a in 2:A) {
+     cum_Z_init[a] = cum_Z_init[a-1] + Z_init[a-1]
+  }
+  
+  # column 1: initial numbers-at-age for each cohort cells 1 to A-1
+  for(a in 2:(A-1)) {
+     Nat[a,1] = R_init * exp(-cum_Z_init[a] + log_Rt[a-1])
+   }	
+  
    # specific deviation for initial plus group
-   Nat[A,1] = (exp(log_mean_R - (A-1) * M) / (1 - exp(-M))) * exp(log_Rt[A-1])      
+   Nat[A,1] = (R_init * exp(-cum_Z_init[A]) / (1 - exp(-Z_init[A]))) * exp(log_Rt[A-1])
  
    # forward
  for(t in 2:T) {
@@ -306,6 +325,7 @@ urm <- function(pars, data) {
    RTMB::REPORT(nll_q)
    RTMB::REPORT(nll_M)
    RTMB::REPORT(nll_sigmaR)
+   RTMB::REPORT(sprpen)
    RTMB::REPORT(nll)
    
    return(nll)
