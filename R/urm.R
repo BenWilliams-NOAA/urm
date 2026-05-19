@@ -84,7 +84,7 @@ urm <- function(pars, data) {
    # numbers-at-age ----
   
    for(t in 1:T) {
-     # year-specific bias adjustment if using random effects, yes: bias_switch = 1	
+     # year-specific bias adjustment if using random effects bias_switch = 0	
      if(bias_switch == 1) {
      		bias_adj = bias_ramp[t] * ((sigmaR^2) / 2)
      		Nat[1,t] = exp(log_mean_R - bias_adj + log_Rt[(A-1+t)])  # recruitment in year t
